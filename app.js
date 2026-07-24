@@ -3,7 +3,11 @@
 const STORAGE_KEYS = Object.freeze({
   player: "sniffify_player",
   results: "sniffify_results",
-  challenge: "sniffify_challenge"
+  challenge: "sniffify_challenge",
+  playerStats: "sniffify_player_stats",
+  direction: "sniffify_direction",
+  dwarfEnabled: "sniffify_dwarf_enabled",
+  dwarfDifficulty: "sniffify_dwarf_difficulty"
 });
 
 const CHALLENGES = Object.freeze({
@@ -13,137 +17,598 @@ const CHALLENGES = Object.freeze({
     description: "Einfach und direkt",
     difficulty: 1,
     tolerance: 28,
+    lengthCm: 18,
     preview: "M8 42 L84 10"
   },
+
   wave: {
     id: "wave",
     name: "Wellenritt",
     description: "Weiche, lange Kurven",
     difficulty: 1.08,
     tolerance: 29,
+    lengthCm: 26,
     preview: "M4 38 C20 4 35 5 45 30 C57 57 73 55 86 14"
   },
+
   zigzag: {
     id: "zigzag",
     name: "Zickzack",
     description: "Scharfe Richtungswechsel",
     difficulty: 1.18,
     tolerance: 31,
+    lengthCm: 34,
     preview: "M5 40 L22 10 L39 40 L56 10 L73 40 L86 12"
   },
+
   snake: {
     id: "snake",
     name: "Schlangenlinie",
     description: "Viele kleine Kurven",
     difficulty: 1.14,
     tolerance: 30,
-    preview: "M5 38 C20 7 29 8 38 27 C47 46 58 47 67 26 C74 10 81 10 86 18"
+    lengthCm: 38,
+    preview:
+      "M5 38 C20 7 29 8 38 27 C47 46 58 47 67 26 C74 10 81 10 86 18"
   },
+
   lightning: {
     id: "lightning",
     name: "Blitzspur",
     description: "Kantig und unruhig",
     difficulty: 1.23,
     tolerance: 32,
-    preview: "M6 40 L28 8 L24 28 L48 18 L42 41 L68 13 L63 31 L86 8"
+    lengthCm: 42,
+    preview:
+      "M6 40 L28 8 L24 28 L48 18 L42 41 L68 13 L63 31 L86 8"
   },
+
   spiral: {
     id: "spiral",
     name: "Wirbelwind",
     description: "Schleifen und Drehungen",
     difficulty: 1.28,
     tolerance: 32,
-    preview: "M6 38 C17 11 55 7 73 23 C89 37 70 50 51 43 C34 37 37 20 53 19 C65 19 69 27 65 34"
+    lengthCm: 48,
+    preview:
+      "M6 38 C17 11 55 7 73 23 C89 37 70 50 51 43 C34 37 37 20 53 19 C65 19 69 27 65 34"
   },
+
   heart: {
     id: "heart",
     name: "Herzspur",
     description: "Zwei Bögen und eine Spitze",
     difficulty: 1.2,
     tolerance: 31,
-    preview: "M46 44 C8 24 12 4 30 10 C40 13 46 24 46 24 C46 24 52 13 62 10 C80 4 84 24 46 44"
+    lengthCm: 36,
+    preview:
+      "M46 44 C8 24 12 4 30 10 C40 13 46 24 46 24 C46 24 52 13 62 10 C80 4 84 24 46 44"
   },
+
   random: {
     id: "random",
     name: "Zufallsmodus",
     description: "Jede Runde eine andere Strecke",
     difficulty: 1,
     tolerance: 30,
+    lengthCm: 0,
     preview: ""
+  }
+});
+
+const DIRECTIONS = Object.freeze({
+  north: {
+    id: "north",
+    label: "Norden",
+    arrow: "↑",
+
+    destinations: [
+      {
+        name: "Burg Querfurt",
+        distanceM: 1200
+      },
+      {
+        name: "Lutherstadt Eisleben",
+        distanceM: 21000
+      },
+      {
+        name: "Hettstedt",
+        distanceM: 39000
+      },
+      {
+        name: "Magdeburg",
+        distanceM: 98000
+      }
+    ]
+  },
+
+  northeast: {
+    id: "northeast",
+    label: "Nordosten",
+    arrow: "↗",
+
+    destinations: [
+      {
+        name: "Halle (Saale)",
+        distanceM: 36000
+      },
+      {
+        name: "Bitterfeld-Wolfen",
+        distanceM: 76000
+      },
+      {
+        name: "Berlin",
+        distanceM: 205000
+      }
+    ]
+  },
+
+  east: {
+    id: "east",
+    label: "Osten",
+    arrow: "→",
+
+    destinations: [
+      {
+        name: "Merseburg",
+        distanceM: 30000
+      },
+      {
+        name: "Leipzig",
+        distanceM: 69000
+      },
+      {
+        name: "Dresden",
+        distanceM: 180000
+      }
+    ]
+  },
+
+  south: {
+    id: "south",
+    label: "Süden",
+    arrow: "↓",
+
+    destinations: [
+      {
+        name: "Nebra (Unstrut)",
+        distanceM: 25000
+      },
+      {
+        name: "Naumburg (Saale)",
+        distanceM: 51000
+      },
+      {
+        name: "Jena",
+        distanceM: 100000
+      }
+    ]
+  },
+
+  southwest: {
+    id: "southwest",
+    label: "Südwesten",
+    arrow: "↙",
+
+    destinations: [
+      {
+        name: "Weimar",
+        distanceM: 95000
+      },
+      {
+        name: "Erfurt",
+        distanceM: 108000
+      },
+      {
+        name: "Frankfurt am Main",
+        distanceM: 285000
+      }
+    ]
+  },
+
+  west: {
+    id: "west",
+    label: "Westen",
+    arrow: "←",
+
+    destinations: [
+      {
+        name: "Sangerhausen",
+        distanceM: 47000
+      },
+      {
+        name: "Nordhausen",
+        distanceM: 92000
+      },
+      {
+        name: "Kassel",
+        distanceM: 175000
+      }
+    ]
+  },
+
+  northwest: {
+    id: "northwest",
+    label: "Nordwesten",
+    arrow: "↖",
+
+    destinations: [
+      {
+        name: "Quedlinburg",
+        distanceM: 85000
+      },
+      {
+        name: "Wernigerode",
+        distanceM: 115000
+      },
+      {
+        name: "Hannover",
+        distanceM: 210000
+      }
+    ]
+  }
+});
+
+const DWARF_LEVELS = Object.freeze({
+  cozy: {
+    id: "cozy",
+    label: "Gemütlich",
+    targetSeconds: 24
+  },
+
+  busy: {
+    id: "busy",
+    label: "Fleißig",
+    targetSeconds: 16
+  },
+
+  racing: {
+    id: "racing",
+    label: "Rasend",
+    targetSeconds: 11
   }
 });
 
 const app = document.getElementById("app");
 
 const state = {
-  playerName: readStorage(STORAGE_KEYS.player, ""),
-  selectedChallenge: readStorage(STORAGE_KEYS.challenge, "random"),
+  playerName: readStorage(
+    STORAGE_KEYS.player,
+    ""
+  ),
+
+  selectedChallenge: readStorage(
+    STORAGE_KEYS.challenge,
+    "random"
+  ),
+
+  selectedDirection: readStorage(
+    STORAGE_KEYS.direction,
+    "northeast"
+  ),
+
+  dwarfEnabled:
+    readStorage(
+      STORAGE_KEYS.dwarfEnabled,
+      "true"
+    ) === "true",
+
+  dwarfDifficulty: readStorage(
+    STORAGE_KEYS.dwarfDifficulty,
+    "busy"
+  ),
+
   currentChallengeId: null,
   currentResult: null,
   game: null,
   confettiTimeout: null
 };
 
-function readStorage(key, fallback) {
+function readStorage(
+  key,
+  fallback
+) {
   try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : value;
+    const value =
+      localStorage.getItem(key);
+
+    return value === null
+      ? fallback
+      : value;
   } catch (error) {
-    console.error("SNIFFIfy: Lokale Daten konnten nicht gelesen werden.", error);
+    console.error(
+      "SNIFFIfy: Lokale Daten konnten nicht gelesen werden.",
+      error
+    );
+
     return fallback;
   }
 }
 
-function writeStorage(key, value) {
+function writeStorage(
+  key,
+  value
+) {
   try {
-    localStorage.setItem(key, value);
+    localStorage.setItem(
+      key,
+      value
+    );
+
     return true;
   } catch (error) {
-    console.error("SNIFFIfy: Lokale Daten konnten nicht gespeichert werden.", error);
+    console.error(
+      "SNIFFIfy: Lokale Daten konnten nicht gespeichert werden.",
+      error
+    );
+
     return false;
   }
 }
 
 function loadResults() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.results);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const raw =
+      localStorage.getItem(
+        STORAGE_KEYS.results
+      );
+
+    const parsed =
+      raw
+        ? JSON.parse(raw)
+        : [];
+
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
   } catch (error) {
-    console.error("SNIFFIfy: Ergebnisse sind ungültig und wurden ignoriert.", error);
+    console.error(
+      "SNIFFIfy: Ergebnisse sind ungültig und wurden ignoriert.",
+      error
+    );
+
     return [];
   }
 }
 
 function saveResults(results) {
-  writeStorage(STORAGE_KEYS.results, JSON.stringify(results.slice(0, 50)));
+  writeStorage(
+    STORAGE_KEYS.results,
+    JSON.stringify(
+      results.slice(0, 50)
+    )
+  );
+}
+
+function loadPlayerStats() {
+  try {
+    const raw =
+      localStorage.getItem(
+        STORAGE_KEYS.playerStats
+      );
+
+    const parsed =
+      raw
+        ? JSON.parse(raw)
+        : {};
+
+    return (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed)
+    )
+      ? parsed
+      : {};
+  } catch (error) {
+    console.error(
+      "SNIFFIfy: Spielerstatistiken sind ungültig.",
+      error
+    );
+
+    return {};
+  }
+}
+
+function normalizePlayerKey(name) {
+  return String(name)
+    .trim()
+    .toLocaleLowerCase("de-DE");
+}
+
+function getPlayerStats(name) {
+  const allStats =
+    loadPlayerStats();
+
+  const key =
+    normalizePlayerKey(name);
+
+  const existing =
+    allStats[key];
+
+  return (
+    existing &&
+    typeof existing === "object"
+  )
+    ? {
+        displayName:
+          existing.displayName ||
+          name,
+
+        totalCm:
+          Number(
+            existing.totalCm
+          ) || 0,
+
+        rounds:
+          Number(
+            existing.rounds
+          ) || 0,
+
+        winsAgainstDwarf:
+          Number(
+            existing.winsAgainstDwarf
+          ) || 0,
+
+        lossesAgainstDwarf:
+          Number(
+            existing.lossesAgainstDwarf
+          ) || 0
+      }
+    : {
+        displayName: name,
+        totalCm: 0,
+        rounds: 0,
+        winsAgainstDwarf: 0,
+        lossesAgainstDwarf: 0
+      };
+}
+
+function addRoundToPlayerStats(
+  result
+) {
+  const allStats =
+    loadPlayerStats();
+
+  const key =
+    normalizePlayerKey(
+      result.playerName
+    );
+
+  const stats =
+    getPlayerStats(
+      result.playerName
+    );
+
+  stats.displayName =
+    result.playerName;
+
+  stats.totalCm =
+    Number(
+      (
+        stats.totalCm +
+        result.completedLineCm
+      ).toFixed(2)
+    );
+
+  stats.rounds += 1;
+
+  if (result.dwarfEnabled) {
+    if (result.dwarfWon) {
+      stats.lossesAgainstDwarf += 1;
+    } else {
+      stats.winsAgainstDwarf += 1;
+    }
+  }
+
+  allStats[key] =
+    stats;
+
+  writeStorage(
+    STORAGE_KEYS.playerStats,
+    JSON.stringify(allStats)
+  );
+
+  return stats;
 }
 
 function escapeHtml(value) {
   return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
 
-function formatNumber(value, digits = 2) {
-  const number = Number(value);
+function formatNumber(
+  value,
+  digits = 2
+) {
+  const number =
+    Number(value);
 
   return Number.isFinite(number)
-    ? number.toLocaleString("de-DE", {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits
-      })
+    ? number.toLocaleString(
+        "de-DE",
+        {
+          minimumFractionDigits:
+            digits,
+
+          maximumFractionDigits:
+            digits
+        }
+      )
     : "0,00";
+}
+
+function formatDistanceFromCm(
+  totalCm
+) {
+  const centimeters =
+    Math.max(
+      0,
+      Number(totalCm) || 0
+    );
+
+  if (centimeters < 100) {
+    return (
+      `${formatNumber(
+        centimeters,
+        1
+      )} cm`
+    );
+  }
+
+  if (centimeters < 100000) {
+    return (
+      `${formatNumber(
+        centimeters / 100,
+        2
+      )} m`
+    );
+  }
+
+  return (
+    `${formatNumber(
+      centimeters / 100000,
+      3
+    )} km`
+  );
 }
 
 function noseIcon() {
   return `
-    <svg viewBox="0 0 120 120" aria-hidden="true">
+    <svg
+      viewBox="0 0 120 120"
+      aria-hidden="true"
+    >
       <path
-        d="M61 13 C54 27 50 42 49 58 C48 71 38 77 36 87 C34 98 44 105 55 101 C59 100 62 97 64 94 C68 100 74 103 82 101 C94 98 97 85 89 78 C83 72 76 69 75 59 C73 43 71 27 64 13"
+        d="
+          M61 13
+          C54 27 50 42 49 58
+          C48 71 38 77 36 87
+          C34 98 44 105 55 101
+          C59 100 62 97 64 94
+          C68 100 74 103 82 101
+          C94 98 97 85 89 78
+          C83 72 76 69 75 59
+          C73 43 71 27 64 13
+        "
         fill="#f1b99b"
         stroke="#18181b"
         stroke-width="5"
@@ -152,7 +617,12 @@ function noseIcon() {
       />
 
       <path
-        d="M45 88 C49 83 57 83 62 88 M66 88 C72 82 81 83 85 89"
+        d="
+          M45 88
+          C49 83 57 83 62 88
+          M66 88
+          C72 82 81 83 85 89
+        "
         fill="none"
         stroke="#18181b"
         stroke-width="4"
@@ -160,18 +630,15 @@ function noseIcon() {
       />
 
       <path
-        d="M21 48 C27 43 31 42 37 43 M83 40 C91 40 98 44 102 50"
+        d="
+          M21 48
+          C27 43 31 42 37 43
+          M83 40
+          C91 40 98 44 102 50
+        "
         fill="none"
         stroke="#7c3aed"
         stroke-width="5"
-        stroke-linecap="round"
-      />
-
-      <path
-        d="M24 65 C18 68 15 73 14 78 M98 65 C104 69 107 74 108 81"
-        fill="none"
-        stroke="#ec4899"
-        stroke-width="4"
         stroke-linecap="round"
       />
     </svg>
@@ -180,26 +647,123 @@ function noseIcon() {
 
 function trophyIcon() {
   return `
-    <svg viewBox="0 0 120 120" aria-hidden="true">
+    <svg
+      viewBox="0 0 120 120"
+      aria-hidden="true"
+    >
       <path
-        d="M39 20 H81 V46 C81 64 73 74 60 74 C47 74 39 64 39 46 Z"
+        d="
+          M39 20
+          H81
+          V46
+          C81 64 73 74 60 74
+          C47 74 39 64 39 46
+          Z
+        "
         fill="#fde68a"
         stroke="#18181b"
         stroke-width="5"
-        stroke-linejoin="round"
       />
 
       <path
-        d="M39 29 H25 C24 48 31 57 44 59 M81 29 H95 C96 48 89 57 76 59"
+        d="
+          M39 29
+          H25
+          C24 48 31 57 44 59
+          M81 29
+          H95
+          C96 48 89 57 76 59
+        "
         fill="none"
         stroke="#18181b"
         stroke-width="5"
         stroke-linecap="round"
-        stroke-linejoin="round"
       />
 
       <path
-        d="M60 74 V91 M43 101 H77"
+        d="
+          M60 74
+          V91
+          M43 101
+          H77
+        "
+        fill="none"
+        stroke="#18181b"
+        stroke-width="7"
+        stroke-linecap="round"
+      />
+    </svg>
+  `;
+}
+
+function dwarfIcon() {
+  return `
+    <svg
+      viewBox="0 0 150 150"
+      aria-hidden="true"
+    >
+      <path
+        d="M38 52 L75 12 L112 52 Z"
+        fill="#7c3aed"
+        stroke="#18181b"
+        stroke-width="5"
+        stroke-linejoin="round"
+      />
+
+      <circle
+        cx="75"
+        cy="65"
+        r="31"
+        fill="#f1b99b"
+        stroke="#18181b"
+        stroke-width="5"
+      />
+
+      <path
+        d="
+          M48 78
+          C55 118 95 126 105 78
+          C95 96 60 98 48 78
+          Z
+        "
+        fill="#ffffff"
+        stroke="#18181b"
+        stroke-width="5"
+      />
+
+      <circle
+        cx="64"
+        cy="61"
+        r="3"
+        fill="#18181b"
+      />
+
+      <circle
+        cx="87"
+        cy="61"
+        r="3"
+        fill="#18181b"
+      />
+
+      <path
+        d="
+          M73 65
+          L68 75
+          L78 75
+        "
+        fill="none"
+        stroke="#18181b"
+        stroke-width="4"
+        stroke-linecap="round"
+      />
+
+      <path
+        d="
+          M104 98
+          L132 128
+          M122 118
+          L139 101
+        "
         fill="none"
         stroke="#18181b"
         stroke-width="7"
@@ -207,11 +771,16 @@ function trophyIcon() {
       />
 
       <path
-        d="M60 29 L65 39 L76 41 L68 49 L70 60 L60 55 L50 60 L52 49 L44 41 L55 39 Z"
-        fill="#7c3aed"
+        d="
+          M128 95
+          L144 111
+          L134 121
+          L118 105
+          Z
+        "
+        fill="#9ca3af"
         stroke="#18181b"
-        stroke-width="3"
-        stroke-linejoin="round"
+        stroke-width="4"
       />
     </svg>
   `;
@@ -219,24 +788,25 @@ function trophyIcon() {
 
 function iconButton(symbol) {
   return `
-    <span class="btn-icon" aria-hidden="true">
+    <span
+      class="btn-icon"
+      aria-hidden="true"
+    >
       ${symbol}
     </span>
   `;
 }
 
-function challengePreview(challenge) {
-  if (challenge.id === "random") {
+function challengePreview(
+  challenge
+) {
+  if (
+    challenge.id === "random"
+  ) {
     return `
       <div
-        class="challenge-preview"
+        class="challenge-preview random-preview"
         aria-hidden="true"
-        style="
-          display: grid;
-          place-items: center;
-          font-size: 38px;
-          font-weight: 900;
-        "
       >
         ?
       </div>
@@ -249,16 +819,26 @@ function challengePreview(challenge) {
       viewBox="0 0 92 52"
       aria-hidden="true"
     >
-      <path d="${challenge.preview}" />
+      <path
+        d="${challenge.preview}"
+      />
     </svg>
   `;
 }
 
-function showFatalError(message, error = null) {
+function showFatalError(
+  message,
+  error = null
+) {
   if (error) {
-    console.error(`SNIFFIfy: ${message}`, error);
+    console.error(
+      `SNIFFIfy: ${message}`,
+      error
+    );
   } else {
-    console.error(`SNIFFIfy: ${message}`);
+    console.error(
+      `SNIFFIfy: ${message}`
+    );
   }
 
   if (!app) {
@@ -271,7 +851,10 @@ function showFatalError(message, error = null) {
   app.innerHTML = `
     <section class="screen">
       <div class="card">
-        <h1>App-Fehler</h1>
+
+        <h1>
+          App-Fehler
+        </h1>
 
         <p>
           ${escapeHtml(message)}
@@ -284,22 +867,30 @@ function showFatalError(message, error = null) {
         >
           Neu laden
         </button>
+
       </div>
     </section>
   `;
 
   document
-    .getElementById("fatalReloadButton")
+    .getElementById(
+      "fatalReloadButton"
+    )
     ?.addEventListener(
       "click",
       () => location.reload(),
-      { once: true }
+      {
+        once: true
+      }
     );
 }
 
 function validateStartup() {
   if (!app) {
-    console.error("SNIFFIfy: Das Hauptelement #app fehlt.");
+    console.error(
+      "SNIFFIfy: Das Hauptelement #app fehlt."
+    );
+
     return false;
   }
 
@@ -311,8 +902,31 @@ function validateStartup() {
     return false;
   }
 
-  if (!CHALLENGES[state.selectedChallenge]) {
-    state.selectedChallenge = "random";
+  if (
+    !CHALLENGES[
+      state.selectedChallenge
+    ]
+  ) {
+    state.selectedChallenge =
+      "random";
+  }
+
+  if (
+    !DIRECTIONS[
+      state.selectedDirection
+    ]
+  ) {
+    state.selectedDirection =
+      "northeast";
+  }
+
+  if (
+    !DWARF_LEVELS[
+      state.dwarfDifficulty
+    ]
+  ) {
+    state.dwarfDifficulty =
+      "busy";
   }
 
   return true;
@@ -322,38 +936,102 @@ function renderHome() {
   cleanupGame();
   removeConfetti();
 
-  state.currentChallengeId = null;
+  state.currentChallengeId =
+    null;
 
-  const options = Object.values(CHALLENGES)
-    .map((challenge) => {
-      const selected =
-        state.selectedChallenge === challenge.id;
+  const options =
+    Object.values(
+      CHALLENGES
+    )
+      .map((challenge) => {
+        const selected =
+          state.selectedChallenge ===
+          challenge.id;
 
-      const randomClass =
-        challenge.id === "random"
-          ? " challenge-random"
-          : "";
+        const randomClass =
+          challenge.id === "random"
+            ? " challenge-random"
+            : "";
 
-      return `
-        <button
-          class="challenge-option${selected ? " selected" : ""}${randomClass}"
-          type="button"
-          data-challenge="${challenge.id}"
-          aria-pressed="${selected}"
-        >
-          ${challengePreview(challenge)}
+        const lengthText =
+          challenge.id === "random"
+            ? "zufällige Länge"
+            : `${challenge.lengthCm} cm`;
 
-          <strong>
-            ${escapeHtml(challenge.name)}
-          </strong>
+        return `
+          <button
+            class="challenge-option${selected ? " selected" : ""}${randomClass}"
+            type="button"
+            data-challenge="${challenge.id}"
+            aria-pressed="${selected}"
+          >
+            ${challengePreview(
+              challenge
+            )}
 
-          <span>
-            ${escapeHtml(challenge.description)}
-          </span>
-        </button>
-      `;
-    })
-    .join("");
+            <strong>
+              ${escapeHtml(
+                challenge.name
+              )}
+            </strong>
+
+            <span>
+              ${escapeHtml(
+                challenge.description
+              )}
+              ·
+              ${lengthText}
+            </span>
+          </button>
+        `;
+      })
+      .join("");
+
+  const directionOptions =
+    Object.values(DIRECTIONS)
+      .map((direction) => {
+        const selected =
+          state.selectedDirection ===
+          direction.id;
+
+        return `
+          <option
+            value="${direction.id}"
+            ${selected ? "selected" : ""}
+          >
+            ${direction.arrow}
+            ${direction.label}
+          </option>
+        `;
+      })
+      .join("");
+
+  const dwarfLevels =
+    Object.values(
+      DWARF_LEVELS
+    )
+      .map((level) => {
+        const selected =
+          state.dwarfDifficulty ===
+          level.id;
+
+        return `
+          <option
+            value="${level.id}"
+            ${selected ? "selected" : ""}
+          >
+            ${level.label}
+          </option>
+        `;
+      })
+      .join("");
+
+  const playerStats =
+    state.playerName
+      ? getPlayerStats(
+          state.playerName
+        )
+      : null;
 
   app.innerHTML = `
     <section class="screen">
@@ -369,7 +1047,8 @@ function renderHome() {
         </h1>
 
         <p class="subtitle">
-          Die vollkommen unseriöse Nasen-Challenge
+          Die vollkommen unseriöse
+          Nasen-Challenge
         </p>
 
       </header>
@@ -390,8 +1069,28 @@ function renderHome() {
           maxlength="24"
           autocomplete="nickname"
           placeholder="Zum Beispiel Baby Minka"
-          value="${escapeHtml(state.playerName)}"
+          value="${escapeHtml(
+            state.playerName
+          )}"
         >
+
+        ${
+          playerStats
+            ? `
+              <p class="player-total-preview">
+                Bisher gesammelt:
+                <strong>
+                  ${formatDistanceFromCm(
+                    playerStats.totalCm
+                  )}
+                </strong>
+                in
+                ${playerStats.rounds}
+                Runden
+              </p>
+            `
+            : ""
+        }
 
       </div>
 
@@ -404,6 +1103,94 @@ function renderHome() {
         <div class="challenge-grid">
           ${options}
         </div>
+
+      </div>
+
+      <div class="card settings-card">
+
+        <h2 class="challenge-section-title">
+          Reise ab Querfurt
+        </h2>
+
+        <label
+          class="field-label"
+          for="directionSelect"
+        >
+          Reiserichtung
+        </label>
+
+        <select
+          id="directionSelect"
+          class="select-input"
+        >
+          ${directionOptions}
+        </select>
+
+        <p class="settings-help">
+          Die Ortsentfernungen sind
+          spielerische Näherungswerte.
+          Querfurt bleibt immer der
+          Ausgangspunkt.
+        </p>
+
+      </div>
+
+      <div class="card dwarf-settings-card">
+
+        <div class="dwarf-settings-head">
+
+          <div class="dwarf-mini">
+            ${dwarfIcon()}
+          </div>
+
+          <div>
+
+            <h2>
+              Schlag den Schaufelzwerg
+            </h2>
+
+            <p>
+              Er schaufelt die Strecke weg,
+              während du zeichnest.
+            </p>
+
+          </div>
+
+        </div>
+
+        <label class="toggle-row">
+
+          <input
+            id="dwarfToggle"
+            type="checkbox"
+            ${state.dwarfEnabled ? "checked" : ""}
+          >
+
+          <span
+            class="toggle-switch"
+            aria-hidden="true"
+          ></span>
+
+          <span>
+            Zwerg als Gegner aktiv
+          </span>
+
+        </label>
+
+        <label
+          class="field-label"
+          for="dwarfDifficulty"
+        >
+          Schwierigkeit
+        </label>
+
+        <select
+          id="dwarfDifficulty"
+          class="select-input"
+          ${state.dwarfEnabled ? "" : "disabled"}
+        >
+          ${dwarfLevels}
+        </select>
 
       </div>
 
@@ -430,98 +1217,196 @@ function renderHome() {
       </div>
 
       <div class="notice">
-        Setze den Finger auf den violetten Startpunkt
-        und folge der Spur bis zum pinken Ziel.
+        Setze den Finger auf den
+        violetten Startpunkt und folge
+        der Spur bis zum pinken Ziel.
       </div>
 
       <p class="disclaimer">
         Reine Satire und Unterhaltung.
-        Alle Mengen und Ergebnisse sind simuliert
-        und frei erfunden.
+        Alle Mengen und Ergebnisse sind
+        simuliert und frei erfunden.
       </p>
 
     </section>
   `;
 
   const nameInput =
-    document.getElementById("playerName");
+    document.getElementById(
+      "playerName"
+    );
 
   document
-    .querySelectorAll("[data-challenge]")
+    .querySelectorAll(
+      "[data-challenge]"
+    )
     .forEach((button) => {
-      button.addEventListener("click", () => {
-        const challengeId =
-          button.dataset.challenge;
+      button.addEventListener(
+        "click",
+        () => {
+          const challengeId =
+            button.dataset.challenge;
 
-        if (!CHALLENGES[challengeId]) {
+          if (
+            !CHALLENGES[
+              challengeId
+            ]
+          ) {
+            return;
+          }
+
+          state.selectedChallenge =
+            challengeId;
+
+          writeStorage(
+            STORAGE_KEYS.challenge,
+            challengeId
+          );
+
+          document
+            .querySelectorAll(
+              "[data-challenge]"
+            )
+            .forEach((option) => {
+              const selected =
+                option.dataset.challenge ===
+                challengeId;
+
+              option.classList.toggle(
+                "selected",
+                selected
+              );
+
+              option.setAttribute(
+                "aria-pressed",
+                String(selected)
+              );
+            });
+        }
+      );
+    });
+
+  document
+    .getElementById(
+      "directionSelect"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        if (
+          !DIRECTIONS[
+            event.target.value
+          ]
+        ) {
           return;
         }
 
-        state.selectedChallenge =
-          challengeId;
+        state.selectedDirection =
+          event.target.value;
 
         writeStorage(
-          STORAGE_KEYS.challenge,
-          challengeId
+          STORAGE_KEYS.direction,
+          state.selectedDirection
         );
+      }
+    );
 
-        document
-          .querySelectorAll("[data-challenge]")
-          .forEach((option) => {
-            const selected =
-              option.dataset.challenge ===
-              challengeId;
+  const dwarfToggle =
+    document.getElementById(
+      "dwarfToggle"
+    );
 
-            option.classList.toggle(
-              "selected",
-              selected
-            );
+  const dwarfDifficulty =
+    document.getElementById(
+      "dwarfDifficulty"
+    );
 
-            option.setAttribute(
-              "aria-pressed",
-              String(selected)
-            );
-          });
-      });
-    });
+  dwarfToggle?.addEventListener(
+    "change",
+    () => {
+      state.dwarfEnabled =
+        dwarfToggle.checked;
 
-  document
-    .getElementById("startGameButton")
-    ?.addEventListener("click", () => {
-      const name =
-        nameInput?.value.trim() || "";
+      writeStorage(
+        STORAGE_KEYS.dwarfEnabled,
+        String(
+          state.dwarfEnabled
+        )
+      );
 
-      if (!name) {
-        nameInput?.setAttribute(
-          "aria-invalid",
-          "true"
-        );
+      if (dwarfDifficulty) {
+        dwarfDifficulty.disabled =
+          !state.dwarfEnabled;
+      }
+    }
+  );
 
-        nameInput?.focus();
-
+  dwarfDifficulty?.addEventListener(
+    "change",
+    () => {
+      if (
+        !DWARF_LEVELS[
+          dwarfDifficulty.value
+        ]
+      ) {
         return;
       }
 
-      nameInput.removeAttribute(
-        "aria-invalid"
-      );
-
-      state.playerName =
-        name.slice(0, 24);
+      state.dwarfDifficulty =
+        dwarfDifficulty.value;
 
       writeStorage(
-        STORAGE_KEYS.player,
-        state.playerName
+        STORAGE_KEYS.dwarfDifficulty,
+        state.dwarfDifficulty
       );
-
-      state.currentChallengeId =
-        resolveChallengeId();
-
-      renderGame();
-    });
+    }
+  );
 
   document
-    .getElementById("leaderboardButton")
+    .getElementById(
+      "startGameButton"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        const name =
+          nameInput?.value.trim() ||
+          "";
+
+        if (!name) {
+          nameInput?.setAttribute(
+            "aria-invalid",
+            "true"
+          );
+
+          nameInput?.focus();
+
+          return;
+        }
+
+        nameInput.removeAttribute(
+          "aria-invalid"
+        );
+
+        state.playerName =
+          name.slice(0, 24);
+
+        writeStorage(
+          STORAGE_KEYS.player,
+          state.playerName
+        );
+
+        state.currentChallengeId =
+          resolveChallengeId();
+
+        renderGame();
+      }
+    );
+
+  document
+    .getElementById(
+      "leaderboardButton"
+    )
     ?.addEventListener(
       "click",
       renderLeaderboard
@@ -530,19 +1415,27 @@ function renderHome() {
 
 function resolveChallengeId() {
   if (
-    state.selectedChallenge !== "random" &&
-    CHALLENGES[state.selectedChallenge]
+    state.selectedChallenge !==
+      "random" &&
+    CHALLENGES[
+      state.selectedChallenge
+    ]
   ) {
     return state.selectedChallenge;
   }
 
   const ids =
-    Object.keys(CHALLENGES).filter(
+    Object.keys(
+      CHALLENGES
+    ).filter(
       (id) => id !== "random"
     );
 
   return ids[
-    Math.floor(Math.random() * ids.length)
+    Math.floor(
+      Math.random() *
+      ids.length
+    )
   ];
 }
 
@@ -551,7 +1444,9 @@ function renderGame() {
   removeConfetti();
 
   const challenge =
-    CHALLENGES[state.currentChallengeId];
+    CHALLENGES[
+      state.currentChallengeId
+    ];
 
   if (!challenge) {
     showFatalError(
@@ -560,6 +1455,69 @@ function renderGame() {
 
     return;
   }
+
+  const dwarfPanel =
+    state.dwarfEnabled
+      ? `
+        <div class="dwarf-race-panel">
+
+          <div class="dwarf-race-info">
+
+            <div
+              id="dwarfCharacter"
+              class="dwarf-character"
+            >
+              ${dwarfIcon()}
+            </div>
+
+            <div>
+
+              <strong>
+                Schaufelzwerg
+              </strong>
+
+              <span>
+                ${
+                  DWARF_LEVELS[
+                    state.dwarfDifficulty
+                  ].label
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+          <div class="dwarf-progress-track">
+
+            <div
+              id="dwarfProgressFill"
+              class="dwarf-progress-fill"
+            ></div>
+
+          </div>
+
+          <div class="race-numbers">
+
+            <span>
+              Du:
+              <strong id="playerRaceValue">
+                0 %
+              </strong>
+            </span>
+
+            <span>
+              Zwerg:
+              <strong id="dwarfRaceValue">
+                0 %
+              </strong>
+            </span>
+
+          </div>
+
+        </div>
+      `
+      : "";
 
   app.innerHTML = `
     <section class="screen">
@@ -581,7 +1539,9 @@ function renderGame() {
           </h2>
 
           <p>
-            ${escapeHtml(state.playerName)}
+            ${escapeHtml(
+              state.playerName
+            )}
           </p>
 
         </div>
@@ -591,10 +1551,18 @@ function renderGame() {
       <div class="card game-card">
 
         <p class="challenge-label">
-          ${escapeHtml(challenge.name)}
+          ${escapeHtml(
+            challenge.name
+          )}
           ·
-          ${escapeHtml(challenge.description)}
+          ${challenge.lengthCm} cm
+          ·
+          ${escapeHtml(
+            challenge.description
+          )}
         </p>
+
+        ${dwarfPanel}
 
         <div class="game-meta">
 
@@ -665,8 +1633,9 @@ function renderGame() {
               </h3>
 
               <p>
-                Starte unten am violetten Kreis
-                und folge der Spur bis zum pinken Ziel.
+                Starte unten am violetten
+                Kreis und folge der Spur
+                bis zum pinken Ziel.
               </p>
 
               <button
@@ -700,18 +1669,24 @@ function renderGame() {
   `;
 
   document
-    .getElementById("backButton")
+    .getElementById(
+      "backButton"
+    )
     ?.addEventListener(
       "click",
       renderHome
     );
 
   document
-    .getElementById("prepareButton")
+    .getElementById(
+      "prepareButton"
+    )
     ?.addEventListener(
       "click",
       beginCountdown,
-      { once: true }
+      {
+        once: true
+      }
     );
 
   try {
@@ -726,9 +1701,16 @@ function renderGame() {
 
 function setupCanvas(challenge) {
   const canvas =
-    document.getElementById("gameCanvas");
+    document.getElementById(
+      "gameCanvas"
+    );
 
-  if (!(canvas instanceof HTMLCanvasElement)) {
+  if (
+    !(
+      canvas instanceof
+      HTMLCanvasElement
+    )
+  ) {
     throw new Error(
       "Canvas #gameCanvas fehlt."
     );
@@ -757,15 +1739,20 @@ function setupCanvas(challenge) {
 
   const dpr =
     Math.min(
-      window.devicePixelRatio || 1,
+      window.devicePixelRatio ||
+      1,
       2
     );
 
   canvas.width =
-    Math.round(rect.width * dpr);
+    Math.round(
+      rect.width * dpr
+    );
 
   canvas.height =
-    Math.round(rect.height * dpr);
+    Math.round(
+      rect.height * dpr
+    );
 
   context.setTransform(
     dpr,
@@ -784,7 +1771,9 @@ function setupCanvas(challenge) {
     );
 
   if (
-    !Array.isArray(pathPoints) ||
+    !Array.isArray(
+      pathPoints
+    ) ||
     pathPoints.length < 20
   ) {
     throw new Error(
@@ -796,8 +1785,11 @@ function setupCanvas(challenge) {
     canvas,
     context,
 
-    width: rect.width,
-    height: rect.height,
+    width:
+      rect.width,
+
+    height:
+      rect.height,
 
     challenge,
     pathPoints,
@@ -814,7 +1806,6 @@ function setupCanvas(challenge) {
     elapsed: 0,
 
     progressIndex: 0,
-
     samples: [],
 
     totalUserDistance: 0,
@@ -823,9 +1814,13 @@ function setupCanvas(challenge) {
     markerPhase: 0,
     markerFrame: null,
     clockFrame: null,
+    dwarfFrame: null,
 
     countdownTimer: null,
-    countdownTimeout: null
+    countdownTimeout: null,
+
+    dwarfProgress: 0,
+    dwarfWon: false
   };
 
   canvas.addEventListener(
@@ -866,45 +1861,88 @@ function preventDefault(event) {
   event.preventDefault();
 }
 
-function bounds(width, height) {
+function bounds(
+  width,
+  height
+) {
   return {
-    centerX: width / 2,
-    startY: height - 42,
-    endY: 42,
-    minX: 38,
-    maxX: width - 38
+    centerX:
+      width / 2,
+
+    startY:
+      height - 42,
+
+    endY:
+      42,
+
+    minX:
+      38,
+
+    maxX:
+      width - 38
   };
 }
 
-function clamp(value, min, max) {
+function clamp(
+  value,
+  min,
+  max
+) {
   return Math.max(
     min,
-    Math.min(max, value)
+    Math.min(
+      max,
+      value
+    )
   );
 }
 
-function createPath(id, width, height) {
+function createPath(
+  id,
+  width,
+  height
+) {
   const generators = {
-    straight: createStraightPath,
-    wave: createWavePath,
-    zigzag: createZigzagPath,
-    snake: createSnakePath,
-    lightning: createLightningPath,
-    spiral: createSpiralPath,
-    heart: createHeartPath
+    straight:
+      createStraightPath,
+
+    wave:
+      createWavePath,
+
+    zigzag:
+      createZigzagPath,
+
+    snake:
+      createSnakePath,
+
+    lightning:
+      createLightningPath,
+
+    spiral:
+      createSpiralPath,
+
+    heart:
+      createHeartPath
   };
 
-  const generator =
-    generators[id];
-
-  return generator
-    ? generator(width, height)
-    : createWavePath(width, height);
+  return (
+    generators[id] ||
+    createWavePath
+  )(
+    width,
+    height
+  );
 }
 
-function createStraightPath(width, height) {
+function createStraightPath(
+  width,
+  height
+) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   return interpolateAnchors(
     [
@@ -921,9 +1959,15 @@ function createStraightPath(width, height) {
   );
 }
 
-function createWavePath(width, height) {
+function createWavePath(
+  width,
+  height
+) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   const points = [];
 
@@ -942,29 +1986,37 @@ function createWavePath(width, height) {
 
     const y =
       b.startY +
-      (b.endY - b.startY) *
+      (
+        b.endY -
+        b.startY
+      ) *
       t;
 
     const x =
       b.centerX +
       Math.sin(
-        t * Math.PI * 3.2 +
+        t *
+        Math.PI *
+        3.2 +
         offset
       ) *
       width *
       0.22 +
       Math.sin(
-        t * Math.PI * 7.1
+        t *
+        Math.PI *
+        7.1
       ) *
       width *
       0.04;
 
     points.push({
-      x: clamp(
-        x,
-        b.minX,
-        b.maxX
-      ),
+      x:
+        clamp(
+          x,
+          b.minX,
+          b.maxX
+        ),
       y
     });
   }
@@ -972,9 +2024,15 @@ function createWavePath(width, height) {
   return points;
 }
 
-function createSnakePath(width, height) {
+function createSnakePath(
+  width,
+  height
+) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   const points = [];
 
@@ -993,31 +2051,38 @@ function createSnakePath(width, height) {
 
     const y =
       b.startY +
-      (b.endY - b.startY) *
+      (
+        b.endY -
+        b.startY
+      ) *
       t;
 
     const amplitude =
       width *
       (
         0.13 +
-        Math.sin(t * Math.PI) *
+        Math.sin(
+          t *
+          Math.PI
+        ) *
         0.06
       );
 
-    const x =
-      b.centerX +
-      Math.sin(
-        t * Math.PI * 7.2 +
-        offset
-      ) *
-      amplitude;
-
     points.push({
-      x: clamp(
-        x,
-        b.minX,
-        b.maxX
-      ),
+      x:
+        clamp(
+          b.centerX +
+          Math.sin(
+            t *
+            Math.PI *
+            7.2 +
+            offset
+          ) *
+          amplitude,
+          b.minX,
+          b.maxX
+        ),
+
       y
     });
   }
@@ -1025,9 +2090,15 @@ function createSnakePath(width, height) {
   return points;
 }
 
-function createZigzagPath(width, height) {
+function createZigzagPath(
+  width,
+  height
+) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   const anchors = [];
   const segments = 9;
@@ -1038,16 +2109,22 @@ function createZigzagPath(width, height) {
     index += 1
   ) {
     const t =
-      index / segments;
+      index /
+      segments;
 
     const y =
       b.startY +
-      (b.endY - b.startY) *
+      (
+        b.endY -
+        b.startY
+      ) *
       t;
 
     const x =
-      index === 0 ||
-      index === segments
+      (
+        index === 0 ||
+        index === segments
+      )
         ? b.centerX
         : b.centerX +
           (
@@ -1057,11 +2134,13 @@ function createZigzagPath(width, height) {
           );
 
     anchors.push({
-      x: clamp(
-        x,
-        b.minX,
-        b.maxX
-      ),
+      x:
+        clamp(
+          x,
+          b.minX,
+          b.maxX
+        ),
+
       y
     });
   }
@@ -1077,7 +2156,10 @@ function createLightningPath(
   height
 ) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   const anchors = [
     [0.5, 0.92],
@@ -1088,14 +2170,19 @@ function createLightningPath(
     [0.34, 0.34],
     [0.63, 0.23],
     [0.5, 0.09]
-  ].map(([x, y]) => ({
-    x: clamp(
-      width * x,
-      b.minX,
-      b.maxX
-    ),
-    y: height * y
-  }));
+  ].map(
+    ([x, y]) => ({
+      x:
+        clamp(
+          width * x,
+          b.minX,
+          b.maxX
+        ),
+
+      y:
+        height * y
+    })
+  );
 
   return interpolateAnchors(
     anchors,
@@ -1103,9 +2190,15 @@ function createLightningPath(
   );
 }
 
-function createSpiralPath(width, height) {
+function createSpiralPath(
+  width,
+  height
+) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   const points = [];
 
@@ -1119,34 +2212,47 @@ function createSpiralPath(width, height) {
 
     const y =
       b.startY +
-      (b.endY - b.startY) *
+      (
+        b.endY -
+        b.startY
+      ) *
       t;
 
     const loopBoost =
-      Math.sin(t * Math.PI);
+      Math.sin(
+        t *
+        Math.PI
+      );
 
     const x =
       b.centerX +
       Math.sin(
-        t * Math.PI * 5.2
+        t *
+        Math.PI *
+        5.2
       ) *
       width *
       (
         0.1 +
-        loopBoost * 0.19
+        loopBoost *
+        0.19
       ) +
       Math.sin(
-        t * Math.PI * 10.4
+        t *
+        Math.PI *
+        10.4
       ) *
       width *
       0.04;
 
     points.push({
-      x: clamp(
-        x,
-        b.minX,
-        b.maxX
-      ),
+      x:
+        clamp(
+          x,
+          b.minX,
+          b.maxX
+        ),
+
       y
     });
   }
@@ -1154,30 +2260,30 @@ function createSpiralPath(width, height) {
   return points;
 }
 
-function createHeartPath(width, height) {
+function createHeartPath(
+  width,
+  height
+) {
   const b =
-    bounds(width, height);
+    bounds(
+      width,
+      height
+    );
 
   const points = [];
-
-  const start = {
-    x: b.centerX,
-    y: b.startY
-  };
-
-  const heartBottom =
-    height * 0.36;
-
-  const heartCenterY =
-    height * 0.22;
 
   points.push(
     ...interpolateAnchors(
       [
-        start,
         {
           x: b.centerX,
-          y: heartBottom
+          y: b.startY
+        },
+        {
+          x: b.centerX,
+          y:
+            height *
+            0.36
         }
       ],
       70
@@ -1202,23 +2308,28 @@ function createHeartPath(width, height) {
       Math.sin(t) ** 3;
 
     const normalizedY =
-      13 * Math.cos(t) -
-      5 * Math.cos(2 * t) -
-      2 * Math.cos(3 * t) -
+      13 *
+      Math.cos(t) -
+      5 *
+      Math.cos(2 * t) -
+      2 *
+      Math.cos(3 * t) -
       Math.cos(4 * t);
 
     points.push({
-      x: clamp(
-        b.centerX +
-        normalizedX *
-        width *
-        0.016,
-        b.minX,
-        b.maxX
-      ),
+      x:
+        clamp(
+          b.centerX +
+          normalizedX *
+          width *
+          0.016,
+          b.minX,
+          b.maxX
+        ),
 
       y:
-        heartCenterY -
+        height *
+        0.22 -
         normalizedY *
         height *
         0.008
@@ -1228,7 +2339,9 @@ function createHeartPath(width, height) {
   points.push(
     ...interpolateAnchors(
       [
-        points[points.length - 1],
+        points[
+          points.length - 1
+        ],
         {
           x: b.centerX,
           y: b.endY
@@ -1249,7 +2362,8 @@ function interpolateAnchors(
 
   for (
     let index = 0;
-    index < anchors.length - 1;
+    index <
+    anchors.length - 1;
     index += 1
   ) {
     const start =
@@ -1260,7 +2374,8 @@ function interpolateAnchors(
 
     for (
       let step = 0;
-      step < stepsPerSegment;
+      step <
+      stepsPerSegment;
       step += 1
     ) {
       const t =
@@ -1270,12 +2385,18 @@ function interpolateAnchors(
       points.push({
         x:
           start.x +
-          (end.x - start.x) *
+          (
+            end.x -
+            start.x
+          ) *
           t,
 
         y:
           start.y +
-          (end.y - start.y) *
+          (
+            end.y -
+            start.y
+          ) *
           t
       });
     }
@@ -1301,7 +2422,8 @@ function animateMarkers() {
     return;
   }
 
-  game.markerPhase += 0.06;
+  game.markerPhase +=
+    0.06;
 
   drawGame();
 
@@ -1340,54 +2462,77 @@ function drawGame() {
   context.lineJoin =
     "round";
 
+  const dwarfIndex =
+    state.dwarfEnabled
+      ? Math.floor(
+          game.dwarfProgress *
+          (
+            pathPoints.length -
+            1
+          )
+        )
+      : 0;
+
+  const remainingPath =
+    pathPoints.slice(
+      dwarfIndex
+    );
+
+  if (dwarfIndex > 0) {
+    drawPolyline(
+      context,
+      pathPoints.slice(
+        0,
+        dwarfIndex + 1
+      ),
+      "rgba(156,163,175,.25)",
+      18
+    );
+  }
+
   drawPolyline(
     context,
-    pathPoints,
+    remainingPath,
     "#18181b",
     20
   );
 
   drawPolyline(
     context,
-    pathPoints,
+    remainingPath,
     "#7c3aed",
     12
   );
 
-  context.setLineDash([
-    3,
-    14
-  ]);
+  context.setLineDash(
+    [3, 14]
+  );
 
   drawPolyline(
     context,
-    pathPoints,
+    remainingPath,
     "rgba(255,255,255,.78)",
     3
   );
 
   context.setLineDash([]);
 
-  const correctTrail =
-    userTrail.filter(
-      (point) => point.correct
-    );
-
-  const wrongTrail =
-    userTrail.filter(
-      (point) => !point.correct
-    );
-
   drawSegmentedTrail(
     context,
-    correctTrail,
+    userTrail.filter(
+      (point) =>
+        point.correct
+    ),
     "rgba(34,197,94,.9)",
     7
   );
 
   drawSegmentedTrail(
     context,
-    wrongTrail,
+    userTrail.filter(
+      (point) =>
+        !point.correct
+    ),
     "rgba(220,38,38,.85)",
     7
   );
@@ -1466,9 +2611,12 @@ function drawSegmentedTrail(
 
   context.beginPath();
 
-  let previous = null;
+  let previous =
+    null;
 
-  for (const point of points) {
+  for (
+    const point of points
+  ) {
     if (
       !previous ||
       point.sampleIndex !==
@@ -1485,7 +2633,8 @@ function drawSegmentedTrail(
       );
     }
 
-    previous = point;
+    previous =
+      point;
   }
 
   context.strokeStyle =
@@ -1572,8 +2721,12 @@ function beginCountdown() {
   }
 
   document
-    .getElementById("gameMessage")
-    ?.classList.add("hidden");
+    .getElementById(
+      "gameMessage"
+    )
+    ?.classList.add(
+      "hidden"
+    );
 
   const overlay =
     document.getElementById(
@@ -1600,42 +2753,49 @@ function beginCountdown() {
   );
 
   game.countdownTimer =
-    window.setInterval(() => {
-      count -= 1;
+    window.setInterval(
+      () => {
+        count -= 1;
 
-      if (count > 0) {
-        setCountdownValue(
-          overlay,
-          count
-        );
-
-        return;
-      }
-
-      clearInterval(
-        game.countdownTimer
-      );
-
-      game.countdownTimer = null;
-
-      setCountdownValue(
-        overlay,
-        "LOS!"
-      );
-
-      game.countdownTimeout =
-        window.setTimeout(() => {
-          if (!state.game) {
-            return;
-          }
-
-          overlay.classList.add(
-            "hidden"
+        if (count > 0) {
+          setCountdownValue(
+            overlay,
+            count
           );
 
-          startRound();
-        }, 550);
-    }, 850);
+          return;
+        }
+
+        clearInterval(
+          game.countdownTimer
+        );
+
+        game.countdownTimer =
+          null;
+
+        setCountdownValue(
+          overlay,
+          "LOS!"
+        );
+
+        game.countdownTimeout =
+          window.setTimeout(
+            () => {
+              if (!state.game) {
+                return;
+              }
+
+              overlay.classList.add(
+                "hidden"
+              );
+
+              startRound();
+            },
+            550
+          );
+      },
+      850
+    );
 }
 
 function setCountdownValue(
@@ -1664,51 +2824,188 @@ function startRound() {
     return;
   }
 
-  game.running = true;
+  game.running =
+    true;
+
   game.startTime =
     performance.now();
 
-  const updateClock = (now) => {
-    const current =
-      state.game;
+  const updateClock =
+    (now) => {
+      const current =
+        state.game;
 
-    if (
-      !current ||
-      !current.running ||
-      current.finished
-    ) {
-      return;
-    }
+      if (
+        !current ||
+        !current.running ||
+        current.finished
+      ) {
+        return;
+      }
 
-    current.elapsed =
-      (
-        now -
-        current.startTime
-      ) /
-      1000;
+      current.elapsed =
+        (
+          now -
+          current.startTime
+        ) /
+        1000;
 
-    const timeElement =
-      document.getElementById(
-        "timeValue"
-      );
-
-    if (timeElement) {
-      timeElement.textContent =
-        formatNumber(
-          current.elapsed
+      const timeElement =
+        document.getElementById(
+          "timeValue"
         );
-    }
 
-    current.clockFrame =
-      requestAnimationFrame(
-        updateClock
-      );
-  };
+      if (timeElement) {
+        timeElement.textContent =
+          formatNumber(
+            current.elapsed
+          );
+      }
+
+      current.clockFrame =
+        requestAnimationFrame(
+          updateClock
+        );
+    };
 
   game.clockFrame =
     requestAnimationFrame(
       updateClock
     );
+
+  if (state.dwarfEnabled) {
+    startDwarfRace();
+  }
+}
+
+function startDwarfRace() {
+  const game =
+    state.game;
+
+  const level =
+    DWARF_LEVELS[
+      state.dwarfDifficulty
+    ];
+
+  if (
+    !game ||
+    !level
+  ) {
+    return;
+  }
+
+  const animateDwarf =
+    (now) => {
+      const current =
+        state.game;
+
+      if (
+        !current ||
+        !current.running ||
+        current.finished
+      ) {
+        return;
+      }
+
+      const elapsed =
+        (
+          now -
+          current.startTime
+        ) /
+        1000;
+
+      current.dwarfProgress =
+        clamp(
+          elapsed /
+          level.targetSeconds,
+          0,
+          1
+        );
+
+      updateDwarfUi(
+        current.dwarfProgress
+      );
+
+      drawGame();
+
+      const playerProgress =
+        current.progressIndex /
+        (
+          current.pathPoints.length -
+          1
+        );
+
+      const gracePassed =
+        elapsed > 3;
+
+      if (
+        current.dwarfProgress >= 1 ||
+        (
+          gracePassed &&
+          current.dwarfProgress >
+          playerProgress +
+          0.035
+        )
+      ) {
+        current.dwarfWon =
+          true;
+
+        finishRound(
+          "dwarf"
+        );
+
+        return;
+      }
+
+      current.dwarfFrame =
+        requestAnimationFrame(
+          animateDwarf
+        );
+    };
+
+  game.dwarfFrame =
+    requestAnimationFrame(
+      animateDwarf
+    );
+}
+
+function updateDwarfUi(
+  progress
+) {
+  const percent =
+    Math.round(
+      progress * 100
+    );
+
+  const fill =
+    document.getElementById(
+      "dwarfProgressFill"
+    );
+
+  const value =
+    document.getElementById(
+      "dwarfRaceValue"
+    );
+
+  const character =
+    document.getElementById(
+      "dwarfCharacter"
+    );
+
+  if (fill) {
+    fill.style.width =
+      `${percent}%`;
+  }
+
+  if (value) {
+    value.textContent =
+      `${percent} %`;
+  }
+
+  if (character) {
+    character.style.left =
+      `calc(${percent}% - 28px)`;
+  }
 }
 
 function canvasPoint(event) {
@@ -1716,7 +3013,8 @@ function canvasPoint(event) {
     state.game;
 
   const rect =
-    game.canvas.getBoundingClientRect();
+    game.canvas
+      .getBoundingClientRect();
 
   return {
     x:
@@ -1729,14 +3027,19 @@ function canvasPoint(event) {
   };
 }
 
-function pointDistance(a, b) {
+function pointDistance(
+  a,
+  b
+) {
   return Math.hypot(
     a.x - b.x,
     a.y - b.y
   );
 }
 
-function handlePointerDown(event) {
+function handlePointerDown(
+  event
+) {
   const game =
     state.game;
 
@@ -1761,6 +3064,7 @@ function handlePointerDown(event) {
     ) > 44
   ) {
     flashCanvasError();
+
     return;
   }
 
@@ -1770,14 +3074,19 @@ function handlePointerDown(event) {
   game.pointerId =
     event.pointerId;
 
-  game.canvas.setPointerCapture(
-    event.pointerId
-  );
+  game.canvas
+    .setPointerCapture(
+      event.pointerId
+    );
 
-  processPointerPoint(point);
+  processPointerPoint(
+    point
+  );
 }
 
-function handlePointerMove(event) {
+function handlePointerMove(
+  event
+) {
   const game =
     state.game;
 
@@ -1799,7 +3108,9 @@ function handlePointerMove(event) {
   );
 }
 
-function handlePointerEnd(event) {
+function handlePointerEnd(
+  event
+) {
   const game =
     state.game;
 
@@ -1831,37 +3142,34 @@ function handlePointerEnd(event) {
 }
 
 function flashCanvasError() {
-  const wrap =
-    document.querySelector(
+  document
+    .querySelector(
       ".canvas-wrap"
-    );
-
-  if (!wrap) {
-    return;
-  }
-
-  wrap.animate(
-    [
+    )
+    ?.animate(
+      [
+        {
+          boxShadow:
+            "0 0 0 0 rgba(220,38,38,0)"
+        },
+        {
+          boxShadow:
+            "0 0 0 7px rgba(220,38,38,.35)"
+        },
+        {
+          boxShadow:
+            "0 0 0 0 rgba(220,38,38,0)"
+        }
+      ],
       {
-        boxShadow:
-          "0 0 0 0 rgba(220,38,38,0)"
-      },
-      {
-        boxShadow:
-          "0 0 0 7px rgba(220,38,38,.35)"
-      },
-      {
-        boxShadow:
-          "0 0 0 0 rgba(220,38,38,0)"
+        duration: 420
       }
-    ],
-    {
-      duration: 420
-    }
-  );
+    );
 }
 
-function processPointerPoint(point) {
+function processPointerPoint(
+  point
+) {
   const game =
     state.game;
 
@@ -1887,16 +3195,6 @@ function processPointerPoint(point) {
       game.progressIndex
     );
 
-  const normalizedDistance =
-    nearest.distance /
-    Math.max(
-      1,
-      Math.min(
-        game.width,
-        game.height
-      )
-    );
-
   const correct =
     nearest.distance <=
     game.challenge.tolerance;
@@ -1912,14 +3210,15 @@ function processPointerPoint(point) {
   const sampleIndex =
     game.samples.length;
 
-  const sample = {
-    distance: nearest.distance,
-    normalizedDistance,
-    correct,
-    pathIndex: nearest.index
-  };
+  game.samples.push({
+    distance:
+      nearest.distance,
 
-  game.samples.push(sample);
+    correct,
+
+    pathIndex:
+      nearest.index
+  });
 
   game.userTrail.push({
     ...point,
@@ -1928,7 +3227,9 @@ function processPointerPoint(point) {
   });
 
   const metrics =
-    calculateLiveMetrics(game);
+    calculateLiveMetrics(
+      game
+    );
 
   updateGameMeta(
     metrics.accuracy,
@@ -1949,7 +3250,9 @@ function processPointerPoint(point) {
       target
     ) <= 48
   ) {
-    finishRound();
+    finishRound(
+      "player"
+    );
   }
 }
 
@@ -2000,15 +3303,21 @@ function findNearestPathPoint(
   }
 
   return {
-    index: nearestIndex,
-    distance: nearestDistance
+    index:
+      nearestIndex,
+
+    distance:
+      nearestDistance
   };
 }
 
-function calculateLiveMetrics(game) {
+function calculateLiveMetrics(
+  game
+) {
   const correctSamples =
     game.samples.filter(
-      (sample) => sample.correct
+      (sample) =>
+        sample.correct
     ).length;
 
   const accuracy =
@@ -2062,6 +3371,11 @@ function updateGameMeta(
       "progressFill"
     );
 
+  const playerRaceValue =
+    document.getElementById(
+      "playerRaceValue"
+    );
+
   if (accuracyElement) {
     accuracyElement.textContent =
       String(accuracy);
@@ -2076,9 +3390,14 @@ function updateGameMeta(
     progressFill.style.width =
       `${progress}%`;
   }
+
+  if (playerRaceValue) {
+    playerRaceValue.textContent =
+      `${progress} %`;
+  }
 }
 
-function finishRound() {
+function finishRound(winner) {
   const game =
     state.game;
 
@@ -2095,6 +3414,9 @@ function finishRound() {
   game.running =
     false;
 
+  game.dwarfWon =
+    winner === "dwarf";
+
   game.elapsed =
     Math.max(
       0.5,
@@ -2110,6 +3432,17 @@ function finishRound() {
   const result =
     evaluateRound(game);
 
+  const stats =
+    addRoundToPlayerStats(
+      result
+    );
+
+  result.playerTotalCm =
+    stats.totalCm;
+
+  result.playerRounds =
+    stats.rounds;
+
   state.currentResult =
     result;
 
@@ -2119,7 +3452,10 @@ function finishRound() {
   results.push(result);
 
   results.sort(
-    (first, second) =>
+    (
+      first,
+      second
+    ) =>
       second.score -
       first.score
   );
@@ -2136,11 +3472,6 @@ function evaluateRound(game) {
   const samples =
     game.samples;
 
-  const targetLength =
-    calculatePathLength(
-      game.pathPoints
-    );
-
   const distances =
     samples.map(
       (sample) =>
@@ -2150,17 +3481,28 @@ function evaluateRound(game) {
   const averageDeviationPx =
     distances.length
       ? distances.reduce(
-          (sum, value) =>
+          (
+            sum,
+            value
+          ) =>
             sum + value,
           0
         ) /
         distances.length
-      : targetLength;
+      : Math.min(
+          game.width,
+          game.height
+        );
 
   const maximumDeviationPx =
     distances.length
-      ? Math.max(...distances)
-      : targetLength;
+      ? Math.max(
+          ...distances
+        )
+      : Math.min(
+          game.width,
+          game.height
+        );
 
   const correctSamples =
     samples.filter(
@@ -2190,16 +3532,6 @@ function evaluateRound(game) {
       100
     );
 
-  const extraDistanceRatio =
-    targetLength > 0
-      ? Math.max(
-          0,
-          game.totalUserDistance -
-          targetLength
-        ) /
-        targetLength
-      : 1;
-
   const scaleReference =
     Math.max(
       1,
@@ -2223,66 +3555,54 @@ function evaluateRound(game) {
     ) *
     100;
 
-  const accuracyScore =
-    clamp(
-      accuracy,
-      0,
-      100
-    ) *
-    0.42;
-
-  const coverageScore =
-    clamp(
-      coverage,
-      0,
-      100
-    ) *
-    0.35;
-
-  const deviationScore =
-    clamp(
-      100 -
-      averageDeviationPercent *
-      8,
-      0,
-      100
-    ) *
-    0.18;
-
-  const efficiencyScore =
-    clamp(
-      100 -
-      extraDistanceRatio *
-      70,
-      0,
-      100
-    ) *
-    0.05;
-
   const overall =
     clamp(
       Math.round(
-        accuracyScore +
-        coverageScore +
-        deviationScore +
-        efficiencyScore
+        clamp(
+          accuracy,
+          0,
+          100
+        ) *
+        0.45 +
+        clamp(
+          coverage,
+          0,
+          100
+        ) *
+        0.38 +
+        clamp(
+          100 -
+          averageDeviationPercent *
+          8,
+          0,
+          100
+        ) *
+        0.17
       ),
       0,
       100
     );
 
-  const virtualDistanceCm =
-    targetLength / 14;
+  const completedLineCm =
+    Number(
+      (
+        game.challenge.lengthCm *
+        (
+          coverage /
+          100
+        )
+      ).toFixed(2)
+    );
 
-  const speed =
-    virtualDistanceCm /
+  const speedCmPerSecond =
+    completedLineCm /
     game.elapsed;
 
   const amount =
     Math.max(
       0.05,
       (
-        virtualDistanceCm *
+        completedLineCm *
         (
           overall /
           100
@@ -2295,12 +3615,23 @@ function evaluateRound(game) {
       )
     );
 
+  const dwarfPenalty =
+    game.dwarfWon
+      ? 900
+      : 0;
+
   const score =
-    Math.round(
-      overall * 100 +
-      speed * 30 +
-      game.challenge.difficulty *
-      500
+    Math.max(
+      0,
+      Math.round(
+        overall *
+        100 +
+        speedCmPerSecond *
+        30 +
+        game.challenge.difficulty *
+        500 -
+        dwarfPenalty
+      )
     );
 
   return {
@@ -2318,6 +3649,11 @@ function evaluateRound(game) {
 
     challengeName:
       game.challenge.name,
+
+    lineLengthCm:
+      game.challenge.lengthCm,
+
+    completedLineCm,
 
     time:
       Number(
@@ -2348,15 +3684,10 @@ function evaluateRound(game) {
           .toFixed(2)
       ),
 
-    distance:
-      Number(
-        virtualDistanceCm
-          .toFixed(1)
-      ),
-
     speed:
       Number(
-        speed.toFixed(2)
+        speedCmPerSecond
+          .toFixed(2)
       ),
 
     amount:
@@ -2366,55 +3697,201 @@ function evaluateRound(game) {
 
     score,
 
+    directionId:
+      state.selectedDirection,
+
+    dwarfEnabled:
+      state.dwarfEnabled,
+
+    dwarfDifficulty:
+      state.dwarfDifficulty,
+
+    dwarfWon:
+      game.dwarfWon,
+
     createdAt:
-      new Date().toISOString()
+      new Date()
+        .toISOString()
   };
 }
 
-function calculatePathLength(points) {
-  let total = 0;
+function getJourneyProgress(
+  totalCm,
+  directionId
+) {
+  const direction =
+    DIRECTIONS[
+      directionId
+    ] ||
+    DIRECTIONS.northeast;
+
+  const totalM =
+    totalCm / 100;
+
+  let previousDistance = 0;
+  let reached = [];
+  let next = null;
 
   for (
-    let index = 1;
-    index < points.length;
-    index += 1
+    const destination of
+    direction.destinations
   ) {
-    total +=
-      pointDistance(
-        points[index - 1],
-        points[index]
+    if (
+      totalM >=
+      destination.distanceM
+    ) {
+      reached.push(
+        destination
       );
+
+      previousDistance =
+        destination.distanceM;
+    } else {
+      next =
+        destination;
+
+      break;
+    }
   }
 
-  return total;
+  if (!next) {
+    const last =
+      direction.destinations[
+        direction.destinations.length -
+        1
+      ];
+
+    return {
+      direction,
+      totalM,
+      reached,
+      next: null,
+      progress: 100,
+      remainingM: 0,
+      lastReached: last
+    };
+  }
+
+  const segmentLength =
+    Math.max(
+      1,
+      next.distanceM -
+      previousDistance
+    );
+
+  const segmentProgress =
+    clamp(
+      (
+        (
+          totalM -
+          previousDistance
+        ) /
+        segmentLength
+      ) *
+      100,
+      0,
+      100
+    );
+
+  return {
+    direction,
+    totalM,
+    reached,
+    next,
+    progress:
+      segmentProgress,
+
+    remainingM:
+      Math.max(
+        0,
+        next.distanceM -
+        totalM
+      ),
+
+    lastReached:
+      reached[
+        reached.length - 1
+      ] ||
+      null
+  };
+}
+
+function formatRemainingMeters(
+  meters
+) {
+  if (meters < 1000) {
+    return (
+      `${formatNumber(
+        meters,
+        0
+      )} m`
+    );
+  }
+
+  return (
+    `${formatNumber(
+      meters / 1000,
+      2
+    )} km`
+  );
 }
 
 function resultComment(result) {
+  if (
+    result.dwarfEnabled &&
+    result.dwarfWon
+  ) {
+    return (
+      "Der Schaufelzwerg hat deine Spur eingeholt und zuerst weggeschaufelt."
+    );
+  }
+
+  if (
+    result.dwarfEnabled &&
+    !result.dwarfWon
+  ) {
+    return (
+      "Du warst schneller als der Schaufelzwerg und hast die Strecke gerettet."
+    );
+  }
+
   if (result.overall >= 95) {
-    return "Präzisions-Nase: fast die komplette Spur sauber getroffen.";
+    return (
+      "Präzisions-Nase: fast die komplette Spur sauber getroffen."
+    );
   }
 
   if (result.overall >= 85) {
-    return "Sehr starke Runde mit nur kleinen Abweichungen.";
+    return (
+      "Sehr starke Runde mit nur kleinen Abweichungen."
+    );
   }
 
   if (result.overall >= 70) {
-    return "Solide Spur. Tempo und Genauigkeit waren ausgewogen.";
+    return (
+      "Solide Spur. Tempo und Genauigkeit waren ausgewogen."
+    );
   }
 
   if (result.overall >= 50) {
-    return "Die Strecke wurde geschafft, aber mehrere Kurven gingen verloren.";
+    return (
+      "Die Strecke wurde geschafft, aber mehrere Kurven gingen verloren."
+    );
   }
 
-  return "Die Linie und dein Finger waren heute nicht derselben Meinung.";
+  return (
+    "Die Linie und dein Finger waren heute nicht derselben Meinung."
+  );
 }
 
 function resultRank(result) {
   const index =
-    loadResults().findIndex(
-      (entry) =>
-        entry.id === result.id
-    );
+    loadResults()
+      .findIndex(
+        (entry) =>
+          entry.id ===
+          result.id
+      );
 
   return index >= 0
     ? index + 1
@@ -2429,11 +3906,43 @@ function renderResult() {
 
   if (!result) {
     renderHome();
+
     return;
   }
 
   const rank =
     resultRank(result);
+
+  const journey =
+    getJourneyProgress(
+      result.playerTotalCm,
+      result.directionId
+    );
+
+  const journeyText =
+    journey.next
+      ? (
+          `Nächstes Ziel: ` +
+          `${journey.next.name} · ` +
+          `noch ` +
+          `${formatRemainingMeters(
+            journey.remainingM
+          )}`
+        )
+      : (
+          `Du bist weiter als ` +
+          `${journey.lastReached?.name || "das letzte Ziel"} ` +
+          `gekommen.`
+        );
+
+  const dwarfClass =
+    result.dwarfEnabled
+      ? (
+          result.dwarfWon
+            ? " dwarf-result-lost"
+            : " dwarf-result-won"
+        )
+      : "";
 
   app.innerHTML = `
     <section class="screen">
@@ -2464,14 +3973,28 @@ function renderResult() {
 
       </div>
 
-      <div class="card result-hero">
+      <div
+        class="card result-hero${dwarfClass}"
+      >
 
         <div class="result-badge">
-          ${trophyIcon()}
+          ${
+            result.dwarfEnabled
+              ? dwarfIcon()
+              : trophyIcon()
+          }
         </div>
 
         <h2>
-          Gesamtergebnis
+          ${
+            result.dwarfEnabled
+              ? (
+                  result.dwarfWon
+                    ? "Der Zwerg gewinnt"
+                    : "Du gewinnst"
+                )
+              : "Gesamtergebnis"
+          }
         </h2>
 
         <p class="result-amount">
@@ -2479,8 +4002,8 @@ function renderResult() {
         </p>
 
         <p class="result-label">
-          nachvollziehbar aus Treffern,
-          Abweichung und Vollständigkeit
+          aus Treffern, Abweichung
+          und Vollständigkeit
         </p>
 
         <div class="result-challenge">
@@ -2489,16 +4012,108 @@ function renderResult() {
           )}
           ·
           ${formatNumber(
-            result.amount
+            result.completedLineCm,
+            1
           )}
-          virtuelle g
+          von
+          ${result.lineLengthCm}
+          cm
         </div>
+
+      </div>
+
+      <div class="card journey-card">
+
+        <div class="journey-head">
+
+          <div class="compass">
+            ${journey.direction.arrow}
+          </div>
+
+          <div>
+
+            <h2>
+              Deine Reise ab Querfurt
+            </h2>
+
+            <p>
+              ${journey.direction.label}
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="journey-total">
+
+          Gesamtstrecke:
+
+          <strong>
+            ${formatDistanceFromCm(
+              result.playerTotalCm
+            )}
+          </strong>
+
+        </div>
+
+        <div class="journey-progress-track">
+
+          <div
+            class="journey-progress-fill"
+            style="
+              width:
+              ${journey.progress}%
+            "
+          ></div>
+
+        </div>
+
+        <p class="journey-next">
+          ${escapeHtml(
+            journeyText
+          )}
+        </p>
+
+        <p class="journey-note">
+          Die Ortsentfernungen sind
+          spielerische Näherungswerte.
+        </p>
 
       </div>
 
       <div class="card">
 
         <div class="stats-grid">
+
+          <div class="stat">
+
+            <strong>
+              ${formatNumber(
+                result.lineLengthCm,
+                0
+              )} cm
+            </strong>
+
+            <span>
+              Soll-Länge
+            </span>
+
+          </div>
+
+          <div class="stat">
+
+            <strong>
+              ${formatNumber(
+                result.completedLineCm,
+                1
+              )} cm
+            </strong>
+
+            <span>
+              geschafft
+            </span>
+
+          </div>
 
           <div class="stat">
 
@@ -2525,35 +4140,6 @@ function renderResult() {
 
             <span>
               Treffergenauigkeit
-            </span>
-
-          </div>
-
-          <div class="stat">
-
-            <strong>
-              ${formatNumber(
-                result.coverage,
-                1
-              )} %
-            </strong>
-
-            <span>
-              getroffene Strecke
-            </span>
-
-          </div>
-
-          <div class="stat">
-
-            <strong>
-              ${formatNumber(
-                result.averageDeviation
-              )} %
-            </strong>
-
-            <span>
-              mittlere Abweichung
             </span>
 
           </div>
@@ -2646,58 +4232,82 @@ function renderResult() {
     </section>
   `;
 
-  createConfetti();
+  if (!result.dwarfWon) {
+    createConfetti();
+  }
 
   document
-    .getElementById("homeButton")
+    .getElementById(
+      "homeButton"
+    )
     ?.addEventListener(
       "click",
       renderHome
     );
 
   document
-    .getElementById("againButton")
-    ?.addEventListener("click", () => {
-      state.currentChallengeId =
-        result.challengeId;
+    .getElementById(
+      "againButton"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        state.currentChallengeId =
+          result.challengeId;
 
-      renderGame();
-    });
-
-  document
-    .getElementById("nextButton")
-    ?.addEventListener("click", () => {
-      state.currentChallengeId =
-        nextChallengeId(
-          result.challengeId
-        );
-
-      renderGame();
-    });
+        renderGame();
+      }
+    );
 
   document
-    .getElementById("rankingButton")
+    .getElementById(
+      "nextButton"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        state.currentChallengeId =
+          nextChallengeId(
+            result.challengeId
+          );
+
+        renderGame();
+      }
+    );
+
+  document
+    .getElementById(
+      "rankingButton"
+    )
     ?.addEventListener(
       "click",
       renderLeaderboard
     );
 
   document
-    .getElementById("shareButton")
+    .getElementById(
+      "shareButton"
+    )
     ?.addEventListener(
       "click",
       shareResult
     );
 }
 
-function nextChallengeId(currentId) {
+function nextChallengeId(
+  currentId
+) {
   const ids =
-    Object.keys(CHALLENGES).filter(
+    Object.keys(
+      CHALLENGES
+    ).filter(
       (id) => id !== "random"
     );
 
   const index =
-    ids.indexOf(currentId);
+    ids.indexOf(
+      currentId
+    );
 
   return ids[
     (
@@ -2717,15 +4327,28 @@ async function shareResult() {
     return;
   }
 
+  const journey =
+    getJourneyProgress(
+      result.playerTotalCm,
+      result.directionId
+    );
+
   const text =
-    `${result.playerName} erzielte bei SNIFFIfy auf der Linie "${result.challengeName}" ` +
-    `${result.overall} %, ${formatNumber(result.accuracy, 1)} % Treffergenauigkeit ` +
-    `und ${formatNumber(result.amount)} virtuelle g. Reine Satire.`;
+    `${result.playerName} schaffte bei SNIFFIfy ` +
+    `${formatNumber(result.completedLineCm, 1)} cm ` +
+    `auf der Linie "${result.challengeName}". ` +
+    `Insgesamt sind es ` +
+    `${formatDistanceFromCm(result.playerTotalCm)} ` +
+    `ab Querfurt Richtung ` +
+    `${journey.direction.label}. ` +
+    `Reine Satire.`;
 
   try {
     if (navigator.share) {
       await navigator.share({
-        title: "SNIFFIfy Ergebnis",
+        title:
+          "SNIFFIfy Ergebnis",
+
         text
       });
 
@@ -2785,9 +4408,10 @@ function renderLeaderboard() {
               const date =
                 new Date(
                   result.createdAt
-                ).toLocaleDateString(
-                  "de-DE"
-                );
+                )
+                  .toLocaleDateString(
+                    "de-DE"
+                  );
 
               const currentClass =
                 state.currentResult?.id ===
@@ -2829,26 +4453,38 @@ function renderLeaderboard() {
                       )}
                       ·
                       ${formatNumber(
-                        result.overall ??
-                        result.accuracy ??
+                        result.completedLineCm ||
                         0,
                         1
-                      )} %
+                      )} cm
                     </div>
 
                   </div>
 
                   <div class="score-value">
 
-                    ${result.score || 0} P.
+                    ${result.score || 0}
+                    P.
 
                     <br>
 
                     <small>
-                      ${formatNumber(
-                        result.amount ||
-                        0
-                      )} g
+                      ${
+                        result.dwarfEnabled
+                          ? (
+                              result.dwarfWon
+                                ? "Zwerg"
+                                : "Sieg"
+                            )
+                          : (
+                              `${formatNumber(
+                                result.overall ??
+                                result.accuracy ??
+                                0,
+                                0
+                              )} %`
+                            )
+                      }
                     </small>
 
                   </div>
@@ -2922,60 +4558,81 @@ function renderLeaderboard() {
       </div>
 
       <p class="disclaimer">
-        Die Bestenliste wird nur lokal
-        in diesem Browser gespeichert.
+        Die Bestenliste und Gesamtstrecken
+        werden lokal in diesem Browser
+        gespeichert.
       </p>
 
     </section>
   `;
 
   document
-    .getElementById("backHomeButton")
+    .getElementById(
+      "backHomeButton"
+    )
     ?.addEventListener(
       "click",
       renderHome
     );
 
   document
-    .getElementById("newGameButton")
-    ?.addEventListener("click", () => {
-      if (!state.playerName) {
-        renderHome();
-        return;
+    .getElementById(
+      "newGameButton"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        if (!state.playerName) {
+          renderHome();
+
+          return;
+        }
+
+        state.currentChallengeId =
+          resolveChallengeId();
+
+        renderGame();
       }
-
-      state.currentChallengeId =
-        resolveChallengeId();
-
-      renderGame();
-    });
+    );
 
   document
-    .getElementById("clearButton")
-    ?.addEventListener("click", () => {
-      const confirmed =
-        window.confirm(
-          "Möchtest du wirklich alle gespeicherten Ergebnisse löschen?"
+    .getElementById(
+      "clearButton"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        const confirmed =
+          window.confirm(
+            "Möchtest du wirklich alle Ergebnisse und Gesamtstrecken löschen?"
+          );
+
+        if (!confirmed) {
+          return;
+        }
+
+        saveResults([]);
+
+        writeStorage(
+          STORAGE_KEYS.playerStats,
+          JSON.stringify({})
         );
 
-      if (!confirmed) {
-        return;
+        state.currentResult =
+          null;
+
+        renderLeaderboard();
       }
-
-      saveResults([]);
-
-      state.currentResult =
-        null;
-
-      renderLeaderboard();
-    });
+    );
 }
 
 function createConfetti() {
   removeConfetti();
 
   const layer =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   layer.id =
     "confettiLayer";
@@ -2997,7 +4654,9 @@ function createConfetti() {
     index += 1
   ) {
     const piece =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     piece.className =
       "confetti-piece";
@@ -3015,16 +4674,26 @@ function createConfetti() {
 
     piece.style.setProperty(
       "--fall-duration",
-      `${2.4 + Math.random() * 2.3}s`
+      `${
+        2.4 +
+        Math.random() *
+        2.3
+      }s`
     );
 
     piece.style.animationDelay =
-      `${Math.random() * 0.8}s`;
+      `${
+        Math.random() *
+        0.8
+      }s`;
 
-    layer.appendChild(piece);
+    layer.appendChild(
+      piece
+    );
   }
 
-  document.body.appendChild(layer);
+  document.body
+    .appendChild(layer);
 
   state.confettiTimeout =
     window.setTimeout(
@@ -3035,7 +4704,9 @@ function createConfetti() {
 
 function removeConfetti() {
   document
-    .getElementById("confettiLayer")
+    .getElementById(
+      "confettiLayer"
+    )
     ?.remove();
 
   if (state.confettiTimeout) {
@@ -3058,6 +4729,12 @@ function cancelGameFrames(game) {
   if (game.clockFrame) {
     cancelAnimationFrame(
       game.clockFrame
+    );
+  }
+
+  if (game.dwarfFrame) {
+    cancelAnimationFrame(
+      game.dwarfFrame
     );
   }
 
@@ -3090,35 +4767,41 @@ function cleanupGame() {
   game.finished =
     true;
 
-  game.canvas?.removeEventListener(
-    "pointerdown",
-    handlePointerDown
-  );
+  game.canvas
+    ?.removeEventListener(
+      "pointerdown",
+      handlePointerDown
+    );
 
-  game.canvas?.removeEventListener(
-    "pointermove",
-    handlePointerMove
-  );
+  game.canvas
+    ?.removeEventListener(
+      "pointermove",
+      handlePointerMove
+    );
 
-  game.canvas?.removeEventListener(
-    "pointerup",
-    handlePointerEnd
-  );
+  game.canvas
+    ?.removeEventListener(
+      "pointerup",
+      handlePointerEnd
+    );
 
-  game.canvas?.removeEventListener(
-    "pointercancel",
-    handlePointerEnd
-  );
+  game.canvas
+    ?.removeEventListener(
+      "pointercancel",
+      handlePointerEnd
+    );
 
-  game.canvas?.removeEventListener(
-    "lostpointercapture",
-    handlePointerEnd
-  );
+  game.canvas
+    ?.removeEventListener(
+      "lostpointercapture",
+      handlePointerEnd
+    );
 
-  game.canvas?.removeEventListener(
-    "contextmenu",
-    preventDefault
-  );
+  game.canvas
+    ?.removeEventListener(
+      "contextmenu",
+      preventDefault
+    );
 
   state.game =
     null;
@@ -3145,7 +4828,9 @@ window.addEventListener(
     cleanupGame();
     removeConfetti();
   },
-  { once: true }
+  {
+    once: true
+  }
 );
 
 initializeApp();
